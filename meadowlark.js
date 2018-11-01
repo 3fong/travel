@@ -2,7 +2,17 @@ var express = require('express');
 
 var app = express();
 
-var handlebars = require('express3-handlebars').create({defaultLayout:'main'});
+var handlebars = require('express3-handlebars').create({
+    defaultLayout:'main',
+    helpers: {
+        section: function(name,options) {
+            if(!this._sections) this._sections = {};
+            this._sections[name] = options.fn(this);
+            return null;
+        }
+    }
+});
+
 app.engine('handlebars',handlebars.engine);
 app.set('view engine','handlebars');
 
@@ -16,9 +26,23 @@ app.use(function(req,res,next){
     console.log(res.locals.partials.weather);
     next();
 });
+app.use(require('body-parser')());
 
 app.get('/',function(req,res){
     res.render('home');
+});
+
+app.get('/newsletter',function(req,res){
+    res.render('newsletter',{csrf:'CSRF token goes here'});
+});
+
+app.post('/process',function(req,res){
+    debugger
+    if(req.xhr ||req.accepts('json,html')==='json'){
+        res.send({success:true});
+    } else{
+        res.redirect(303,'/thank-you');
+    }
 });
 
 app.get('/about',function(req,res){
